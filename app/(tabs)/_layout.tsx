@@ -1,35 +1,65 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Tabs } from "expo-router";
+import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import SignIn from "../auth/SignIn";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+export default function Layout() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  function onAuthSuccess(data: { isAdmin: boolean }) {
+    setIsAuthenticated(true);
+    setIsAdmin(data.isAdmin);
+  }
+
+  if (!isAuthenticated) {
+    return <SignIn onAuthSuccess={onAuthSuccess} />;
+  }
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+      screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
+        tabBarActiveTintColor: "#f032b0ff",
+        tabBarInactiveTintColor: "#888",
+        tabBarStyle: {
+          backgroundColor: "#111",
+          height: 120,
+          borderTopWidth: 0,
+          paddingBottom: 10,
+        },
+        tabBarIcon: ({ color, focused }) => {
+          let iconName: keyof typeof Ionicons.glyphMap = "home-outline";
+
+          if (route.name === "index") {
+            iconName = focused ? "fast-food" : "fast-food-outline";
+          } else if (route.name === "cart") {
+            iconName = focused ? "basket" : "basket-outline";
+          } else if (route.name === "profile") {
+            iconName = focused ? "person" : "person-outline";
+          }
+
+          return <Ionicons name={iconName} size={24} color={color} />;
+        },
+      })}>
+      <Tabs.Screen name="index" options={{ title: "Menu" }} />
+      <Tabs.Screen name="cart" options={{ title: "Cart" }} />
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
