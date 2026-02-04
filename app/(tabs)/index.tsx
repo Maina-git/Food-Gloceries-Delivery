@@ -13,7 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../config/Firebase";
 
 const { width } = Dimensions.get("window");
@@ -50,7 +50,6 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [userName, setUserName] = useState("User");
 
-  // Featured slides images
   const fastDeliveryImg = require("../../assets/images/ai-generated-8662826_1280.jpg");
   const affordablePricesImg = require("../../assets/images/bowl-5466249_1280.jpg");
   const qualityIngredientsImg = require("../../assets/images/fast-food-6974507_1280.jpg");
@@ -61,7 +60,7 @@ export default function Home() {
     { id: 3, title: "Quality Ingredients", desc: "Only the freshest and healthiest meals", image: qualityIngredientsImg },
   ];
 
-  /* ================= AUTO SLIDE ================= */
+  // Auto carousel for featured foods
   useEffect(() => {
     const interval = setInterval(() => {
       const next = currentIndex === featuredFoods.length - 1 ? 0 : currentIndex + 1;
@@ -71,34 +70,33 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [currentIndex]);
 
-  /* ================= FETCH FOODS ================= */
+  // Real-time fetch foods from Firestore
   useEffect(() => {
-    const fetchFoods = async () => {
-      const snapshot = await getDocs(collection(db, "foods"));
-      const foods: FoodItem[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        foods.push({
+    const unsubscribe = onSnapshot(collection(db, "foods"), (snapshot) => {
+      const foods: FoodItem[] = snapshot.docs.map((doc) => {
+        const data = doc.data() as any;
+        return {
           id: doc.id,
           name: data.name,
           desc: data.desc,
           price: `$${data.price}`,
           image: getFoodImage(data.name),
-        });
+        };
       });
       setMenuItems(foods);
-    };
-    fetchFoods();
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  /* ================= FETCH USER NAME ================= */
+  // Fetch user info
   useEffect(() => {
     const fetchUser = async () => {
       try {
         if (!auth.currentUser) return;
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {
-          const data = userDoc.data();
+          const data = userDoc.data() as any;
           setUserName(data.name || "User");
         }
       } catch (error: any) {
@@ -108,7 +106,6 @@ export default function Home() {
     fetchUser();
   }, []);
 
-  /* ================= ORDER ITEM ================= */
   const orderItem = (item: FoodItem) => {
     setSelectedItem(item);
     setQuantity(1);
@@ -121,7 +118,6 @@ export default function Home() {
     if (!selectedItem || !auth.currentUser) return;
 
     try {
-      // Save order in "orders" DB
       const orderRef = doc(collection(db, "orders"));
       await setDoc(orderRef, {
         userId: auth.currentUser.uid,
@@ -133,6 +129,7 @@ export default function Home() {
         location: location || "",
         notes: notes || "",
         createdAt: serverTimestamp(),
+        status: "pending", // initial status
       });
 
       setModalVisible(false);
@@ -159,6 +156,7 @@ export default function Home() {
           <Text style={styles.greetingBig}>What would you like today?</Text>
         </View>
 
+        {/* Featured foods carousel */}
         <ScrollView
           ref={scrollRef}
           horizontal
@@ -177,6 +175,7 @@ export default function Home() {
           ))}
         </ScrollView>
 
+        {/* Menu Items */}
         <View style={styles.menuSection}>
           <Text style={styles.menuTitle}>Our Menu Today: {new Date().toLocaleDateString()}</Text>
           {menuItems.map((item) => (
@@ -197,6 +196,7 @@ export default function Home() {
         </View>
       </ScrollView>
 
+      {/* Order Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -232,7 +232,6 @@ export default function Home() {
   );
 }
 
-// ===== STYLES =====
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#111" },
   greeting: { padding: 16, height: 120 },
@@ -263,6 +262,7 @@ const styles = StyleSheet.create({
   confirmBtn: { backgroundColor: "#f032b0ff", padding: 14, borderRadius: 14, alignItems: "center" },
   confirmText: { color: "white", fontWeight: "bold" },
 });
+
 
 
 

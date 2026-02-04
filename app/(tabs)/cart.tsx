@@ -1,3 +1,7 @@
+
+
+
+// ... existing imports
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -21,17 +25,20 @@ interface CartItem {
   location?: string;
   notes?: string;
   createdAt?: any;
+  status?: string; // added status
 }
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    const q = query(collection(db, "orders"), where("userId", "==", auth.currentUser.uid));
+    const q = query(
+      collection(db, "orders"),
+      where("userId", "==", auth.currentUser.uid)
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items: CartItem[] = [];
       snapshot.forEach((doc) => {
@@ -42,14 +49,19 @@ export default function Cart() {
           desc: data.desc,
           price: data.price,
           qty: data.qty,
-          image: data.image || require("../../assets/images/burger-5571385_1280.jpg"),
+          image:
+            data.image ||
+            require("../../assets/images/burger-5571385_1280.jpg"),
           location: data.location,
           notes: data.notes,
           createdAt: data.createdAt,
+          status: data.status || "pending", // default to pending
         });
       });
-    
-      items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+      items.sort(
+        (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+      );
       setCartItems(items);
       setLoading(false);
     });
@@ -57,23 +69,31 @@ export default function Cart() {
     return () => unsubscribe();
   }, []);
 
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.qty,
+    0
+  );
   const delivery = cartItems.length > 0 ? 2.5 : 0;
   const total = subtotal + delivery;
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
+      >
         <ActivityIndicator size="large" color="#f032b0ff" />
-        <Text style={{ color: "white", fontSize: 18, marginTop: 10 }}>Loading Cart...</Text>
+        <Text style={{ color: "white", fontSize: 18, marginTop: 10 }}>
+          Loading Cart...
+        </Text>
       </View>
     );
   }
 
   if (cartItems.length === 0) {
     return (
-      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+      <View
+        style={[styles.container, { justifyContent: "center", alignItems: "center" }]}
+      >
         <Text style={{ color: "white", fontSize: 18 }}>Your cart is empty 😔</Text>
       </View>
     );
@@ -88,10 +108,27 @@ export default function Cart() {
           <View key={item.id} style={styles.card}>
             <Image source={item.image} style={styles.image} />
             <View style={styles.info}>
-              <Text style={styles.name}>{item.name}</Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                <Text style={styles.name}>{item.name}</Text>
+
+                {/* Status badge */}
+                <Text
+                  style={[
+                    styles.status,
+                    {
+                      backgroundColor:
+                        item.status === "received" ? "#16a34a" : "#facc15", // green or yellow
+                    },
+                  ]}
+                >
+                  {item.status}
+                </Text>
+              </View>
+
               <Text style={styles.desc}>{item.desc}</Text>
               {item.location && <Text style={styles.location}>📍 {item.location}</Text>}
               {item.notes && <Text style={styles.notes}>📝 {item.notes}</Text>}
+
               <View style={styles.row}>
                 <Text style={styles.price}>${(item.price * item.qty).toFixed(2)}</Text>
                 <Text style={styles.qty}>Qty: {item.qty}</Text>
@@ -100,7 +137,7 @@ export default function Cart() {
           </View>
         ))}
 
-    
+        {/* Summary */}
         <View style={styles.summary}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Subtotal</Text>
@@ -120,12 +157,10 @@ export default function Cart() {
         <TouchableOpacity style={styles.checkoutBtn}>
           <Text style={styles.checkoutText}>Proceed to Checkout</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#111", paddingTop: 60, paddingHorizontal: 16 },
@@ -147,14 +182,18 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: "#333", marginVertical: 8 },
   checkoutBtn: { backgroundColor: "#f032b0ff", padding: 16, borderRadius: 14, alignItems: "center", marginVertical: 30 },
   checkoutText: { color: "white", fontWeight: "bold", fontSize: 16 },
+
+  // New style for status badge
+  status: {
+    color: "white",
+    fontWeight: "bold",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    fontSize: 12,
+    textTransform: "uppercase",
+  },
 });
-
-
-
-
-
-
-
 
 
 

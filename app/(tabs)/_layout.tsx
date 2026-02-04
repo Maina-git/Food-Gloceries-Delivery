@@ -12,6 +12,7 @@ export default function Layout() {
     setIsAdmin(data.isAdmin);
   }
 
+  // Show SignIn if not authenticated
   if (!isAuthenticated) {
     return <SignIn onAuthSuccess={onAuthSuccess} />;
   }
@@ -24,7 +25,7 @@ export default function Layout() {
         tabBarInactiveTintColor: "#888",
         tabBarStyle: {
           backgroundColor: "#111",
-          height: 120,
+          height: 120, // adjusted for mobile
           borderTopWidth: 0,
           paddingBottom: 10,
         },
@@ -35,6 +36,10 @@ export default function Layout() {
             iconName = focused ? "fast-food" : "fast-food-outline";
           } else if (route.name === "cart") {
             iconName = focused ? "basket" : "basket-outline";
+          } else if (route.name === "about") {
+            iconName = focused
+              ? "information-circle"
+              : "information-circle-outline"; // fixed icon
           } else if (route.name === "profile") {
             iconName = focused ? "person" : "person-outline";
           }
@@ -44,10 +49,21 @@ export default function Layout() {
       })}>
       <Tabs.Screen name="index" options={{ title: "Menu" }} />
       <Tabs.Screen name="cart" options={{ title: "Cart" }} />
+      <Tabs.Screen name="about" options={{ title: "About" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
